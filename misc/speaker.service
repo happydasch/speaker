@@ -3,7 +3,7 @@ Description=speaker service
 
 [Service]
 Type=notify
-ExecStart=sh /home/pi/speaker/run.sh
+ExecStart=sh /home/pi/speaker/scripts/run.sh
 WorkingDirectory=/home/pi/speaker
 TimeoutStartSec=120
 TimeoutStopSec=30
