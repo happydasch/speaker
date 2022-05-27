@@ -1,8 +1,15 @@
 
 class Client:
 
+    '''
+    Represents a client
+    '''
+
     def __init__(self, speaker):
         self._speaker = speaker
+
+    def get_speaker(self):
+        return self._speaker
 
     def toggle_play(self):
         pass
@@ -10,10 +17,10 @@ class Client:
     def next(self):
         pass
 
-    def volume_up(self):
+    def volume_down(self):
         pass
 
-    def volume_down(self):
+    def volume_up(self):
         pass
 
 
