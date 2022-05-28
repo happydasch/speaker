@@ -53,7 +53,12 @@ class ControlPirateAudio(Control):
         client = speaker.client
         if not client:
             speaker.display.set_overlay(
-                OverlayNotSupported, duration=2, foreground='#ff0000')
+                OverlayNotSupported,
+                duration=0.8,
+                fade_duration=0.5,
+                opacity=0.6,
+                foreground='#ff0000',
+                fade_out=True)
             return
         if pin == self._pin_play:
             client.toggle_play()
