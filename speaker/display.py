@@ -15,6 +15,7 @@ class Display:
     image = None
 
     def __init__(self, speaker):
+        self.image = Image.new('RGBA', self.get_size(), (255, 255, 255))
         self._speaker = speaker
         self._brightness = 0
         self._scene = None
@@ -58,17 +59,16 @@ class Display:
                 overlay_update = True
         if scene:
             if overlay_update or scene.update():
-                self.image = scene.image
-                scene_update = True
-        else:
-            if overlay_update or not self.image:
-                self.image = Image.new(
-                    'RGBA', self.get_size(), (255, 255, 255, 0))
+                scene_image = scene.get_image()
+                if scene_image:
+                    self.image = scene_image
                 scene_update = True
         if overlay and (overlay_update or scene_update):
-            if overlay.image:
+            overlay_image = overlay.get_image()
+            overlay_opacity = overlay.get_opacity()
+            if overlay_image:
                 self.image = Image.blend(
-                    self.image, overlay.image, overlay.opacity)
+                    self.image, overlay_image, overlay_opacity)
         return scene_update or overlay_update
 
     def start(self):
@@ -110,7 +110,8 @@ class DisplayST7789(Display):
         self._brightness = brightness
 
     def redraw(self):
-        self._st7789.display(self.image)
+        if self.image:
+            self._st7789.display(self.image)
 
     def start(self):
         self._backlight.start(self._brightness)
