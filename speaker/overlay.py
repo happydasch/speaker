@@ -14,7 +14,7 @@ class Overlay:
 
     def __init__(
             self, display, opacity=1.0, duration=0.5, fade_duration=0,
-            fade_in=False, fade_out=False, active=True, background='#000000'):
+            fade_in=False, fade_out=False, active=True, background='#000'):
         self._image = Image.new('RGBA', display.get_size(), background)
         self._timer = 0
         self._draw = True
@@ -91,13 +91,15 @@ class Overlay:
         return False
 
 
-class OverlayButton(Overlay):
+class OverlayImageMap(Overlay):
 
-    def __init__(self, display, idx, foreground='#ffffff', **kwargs):
+    def __init__(self, display, image, idx, foreground='#fff', **kwargs):
         super().__init__(display=display, **kwargs)
-        image_dir = os.path.join(os.path.dirname(__file__), 'images')
-        buttons = Image.open(os.path.join(image_dir, 'buttons_256.png'))
-        self._buttons = image_tint(buttons, tint=foreground)
+        buttons = Image.open(image)
+        if not foreground:
+            self._buttons = buttons
+        else:
+            self._buttons = image_tint(buttons, tint=foreground)
         self._image = self._get_overlay_by_button_idx(idx)
 
     def _get_overlay_by_button_idx(self, idx):
@@ -112,43 +114,91 @@ class OverlayButton(Overlay):
         return image.resize(self._display.get_size())
 
 
-class OverlayNotSupported(OverlayButton):
+class OverlayNotSupported(OverlayImageMap):
 
     def __init__(self, display, **kwargs):
-        super().__init__(display=display, idx=0, **kwargs)
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'buttons_256.png')
+        super().__init__(
+            display=display, image=image, idx=0, **kwargs)
 
 
-class OverlayPlay(OverlayButton):
-
-    def __init__(self, display, **kwargs):
-        super().__init__(display=display, idx=1, **kwargs)
-
-
-class OverlayPause(OverlayButton):
+class OverlayButtonPlay(OverlayImageMap):
 
     def __init__(self, display, **kwargs):
-        super().__init__(display=display, idx=2, **kwargs)
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'buttons_256.png')
+        super().__init__(
+            display=display, image=image, idx=1, **kwargs)
 
 
-class OverlayVolumeDown(OverlayButton):
-
-    def __init__(self, display, **kwargs):
-        super().__init__(display=display, idx=3, **kwargs)
-
-
-class OverlayVolumeUp(OverlayButton):
+class OverlayButtonPause(OverlayImageMap):
 
     def __init__(self, display, **kwargs):
-        super().__init__(display=display, idx=4, **kwargs)
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'buttons_256.png')
+        super().__init__(
+            display=display, image=image, idx=2, **kwargs)
 
 
-class OverlayPrevious(OverlayButton):
-
-    def __init__(self, display, **kwargs):
-        super().__init__(display=display, idx=5, **kwargs)
-
-
-class OverlayNext(OverlayButton):
+class OverlayButtonVolumeDown(OverlayImageMap):
 
     def __init__(self, display, **kwargs):
-        super().__init__(display=display, idx=6, **kwargs)
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'buttons_256.png')
+        super().__init__(
+            display=display, image=image, idx=3, **kwargs)
+
+
+class OverlayButtonVolumeUp(OverlayImageMap):
+
+    def __init__(self, display, **kwargs):
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'buttons_256.png')
+        super().__init__(
+            display=display, image=image, idx=4, **kwargs)
+
+
+class OverlayButtonPrevious(OverlayImageMap):
+
+    def __init__(self, display, **kwargs):
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'buttons_256.png')
+        super().__init__(
+            display=display, image=image, idx=5, **kwargs)
+
+
+class OverlayButtonNext(OverlayImageMap):
+
+    def __init__(self, display, **kwargs):
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'buttons_256.png')
+        super().__init__(
+            display=display, image=image, idx=6, **kwargs)
+
+
+class OverlayIconSnapcast(OverlayImageMap):
+
+    def __init__(self, display, **kwargs):
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'icons_256.png')
+        super().__init__(
+            display=display, image=image, foreground=None, idx=0, **kwargs)
+
+
+class OverlayIconBluetooth(OverlayImageMap):
+
+    def __init__(self, display, **kwargs):
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'icons_256.png')
+        super().__init__(
+            display=display, image=image, foreground=None, idx=1, **kwargs)
+
+
+class OverlayIconAirplay(OverlayImageMap):
+
+    def __init__(self, display, **kwargs):
+        image_dir = os.path.join(os.path.dirname(__file__), 'images')
+        image = os.path.join(image_dir, 'icons_256.png')
+        super().__init__(
+            display=display, image=image, idx=2, **kwargs)

@@ -1,8 +1,10 @@
+from threading import Thread
+import pulsectl
 import time
 
 from .control import ControlPirateAudio
 from .display import DisplayST7789
-from .scene import SceneDefault, SceneIntro
+from .scene import (SceneClient, SceneDefault, SceneIntro)
 
 
 class Speaker:
@@ -17,6 +19,7 @@ class Speaker:
     client = None
     display = None
     control = None
+    volume = 100
 
     def __init__(
             self, update_interval=1, display_timeout=8, fps=30,
@@ -26,7 +29,13 @@ class Speaker:
         self.display = DisplayST7789(self)
         self.control = ControlPirateAudio(self)
 
-        self._clients = None
+        self._pulse = pulsectl.Pulse('speaker')
+        self._pulse.event_mask_set('all')
+        self._pulse.event_callback_set(self._event_handler)
+        self._thread = Thread(target=self._thread_fn, daemon=True)
+
+        self._clients = []
+        self._event = None
         self._running = False
         self._active = False
         self._active_timer = 0
@@ -36,6 +45,22 @@ class Speaker:
         self._intro = intro
         self._outro = outro
 
+    def _thread_fn(self):
+        while self._running:
+            self._pulse.event_listen()
+            event = self._event
+            client = None
+            for c in sorted(self._clients, key=lambda c: c.PRIORITY):
+                c.update_event(event)
+                if not client and c.is_active():
+                    client = c
+            if client != self.client:
+                self.set_client(client)
+
+    def _event_handler(self, ev):
+        self._event = ev
+        raise pulsectl.PulseLoopStop
+
     def is_active(self):
         return self._active
 
@@ -43,7 +68,22 @@ class Speaker:
         self._active_timer = time.time()
         self._active = active
 
+    def add_client(self, client, *args, **kwargs):
+        self._clients.append(client(self, *args, **kwargs))
+
+    def set_client(self, client):
+        if client and client != self.client:
+            self.display.set_overlay(
+                    client.OVERLAY,
+                    duration=2.0,
+                    fade_duration=0.5,
+                    opacity=1.0,
+                    fade_out=True)
+        self.client = client
+
     def update(self):
+        for c in self._clients:
+            c.update()
         self._check_display_timeout()
         self._check_scene()
         if not self._check_display_brightness():
@@ -55,6 +95,7 @@ class Speaker:
             return
         last_update = 0
         self._running = True
+        self._thread.start()
         self.control.start()
         self.display.start()
         self.set_active()
@@ -84,6 +125,8 @@ class Speaker:
         self.control.stop()
         self.display.stop()
         self._running = False
+        if self._thread.is_alive():
+            self._thread.join(timeout=1)
 
     def _check_display_brightness(self):
         brightness = self.display.get_brightness()
@@ -109,12 +152,18 @@ class Speaker:
                 self.set_active(False)
 
     def _check_scene(self):
-        scene = self.display.get_scene()
-        if scene:
-            if (not scene.is_active() and not isinstance(scene, SceneDefault)):
-                self.display.set_scene(SceneDefault)
+        cur_scene = self.display.get_scene()
+        scene = None
+
+        if cur_scene:
+            if not cur_scene.is_active():
+                if self.client:
+                    scene = SceneClient
+                else:
+                    scene = SceneDefault
         else:
             if self._intro:
-                self.display.set_scene(SceneIntro)
-            else:
-                self.display.set_scene(SceneDefault)
+                scene = SceneIntro
+
+        if scene and not isinstance(cur_scene, scene):
+            self.display.set_scene(scene)

@@ -48,7 +48,7 @@ class Display:
         overlay_update = False
         scene = self.get_scene()
         overlay = self.get_overlay()
-        if overlay:
+        if overlay and scene and scene.use_overlay():
             if overlay.update():
                 overlay_update = True
             if not overlay.is_active():
@@ -61,12 +61,12 @@ class Display:
                 if scene_image:
                     self._image = scene_image
                 scene_update = True
-        if overlay and (overlay_update or scene_update):
+        if (overlay and scene and scene.use_overlay()
+                and (overlay_update or scene_update)):
             overlay_image = overlay.get_image()
             overlay_opacity = overlay.get_opacity()
-            if scene and scene.use_overlay() and overlay_image:
-                self._image = Image.blend(
-                    self._image, overlay_image, overlay_opacity)
+            self._image = Image.blend(
+                self._image, overlay_image, overlay_opacity)
         return scene_update or overlay_update
 
     def start(self):

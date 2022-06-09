@@ -3,8 +3,8 @@ import time
 from RPi import GPIO
 
 from .overlay import (
-    OverlayNotSupported, OverlayPlay, OverlayPause, OverlayNext,
-    OverlayVolumeDown, OverlayVolumeUp)
+    OverlayNotSupported, OverlayButtonPlay, OverlayButtonPause,
+    OverlayButtonNext, OverlayButtonVolumeDown, OverlayButtonVolumeUp)
 
 
 class Control:
@@ -72,14 +72,14 @@ class ControlPirateAudio(Control):
         if pin == self._pin_play:
             if client.is_playing():
                 speaker.display.set_overlay(
-                    OverlayPause,
+                    OverlayButtonPause,
                     duration=1.0,
                     fade_duration=0.5,
                     opacity=0.9,
                     fade_out=True)
             else:
                 speaker.display.set_overlay(
-                    OverlayPlay,
+                    OverlayButtonPlay,
                     duration=1.0,
                     fade_duration=0.5,
                     opacity=0.9,
@@ -87,7 +87,7 @@ class ControlPirateAudio(Control):
             client.toggle_play()
         elif pin == self._pin_next:
             speaker.display.set_overlay(
-                OverlayNext,
+                OverlayButtonNext,
                 duration=1.0,
                 fade_duration=0.5,
                 opacity=0.9,
@@ -95,7 +95,7 @@ class ControlPirateAudio(Control):
             client.next()
         elif pin == self._pin_volume_down:
             speaker.display.set_overlay(
-                OverlayVolumeDown,
+                OverlayButtonVolumeDown,
                 duration=1.0,
                 fade_duration=0.5,
                 opacity=0.9,
@@ -103,7 +103,7 @@ class ControlPirateAudio(Control):
             client.volume_down()
         elif pin == self._pin_volume_up:
             speaker.display.set_overlay(
-                OverlayVolumeUp,
+                OverlayButtonVolumeUp,
                 duration=1.0,
                 fade_duration=0.5,
                 opacity=0.9,
