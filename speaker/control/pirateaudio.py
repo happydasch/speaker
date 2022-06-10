@@ -2,28 +2,11 @@ import time
 
 from RPi import GPIO
 
-from .overlay import (
+from ..draw import (
     OverlayNotSupported, OverlayButtonPlay, OverlayButtonPause,
     OverlayButtonNext, OverlayButtonVolumeDown, OverlayButtonVolumeUp)
 
-
-class Control:
-
-    '''
-    Represents controls
-    '''
-
-    def __init__(self, speaker):
-        self._speaker = speaker
-
-    def get_speaker(self):
-        return self._speaker
-
-    def start(self):
-        return
-
-    def stop(self):
-        return
+from .control import Control
 
 
 class ControlPirateAudio(Control):

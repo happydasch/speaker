@@ -1,56 +1,20 @@
-import os
 import time
 import playsound
 
 from subprocess import call
 from PIL import Image, ImageDraw, ImageChops
 
-
-class Scene:
-
-    '''
-    Represents a scene to be drawn
-    '''
-
-    def __init__(self, display, active=True, overlay=True, background='#000'):
-        self._image = Image.new('RGBA', display.get_size(), background)
-        self._background = background
-        self._timer = 0
-        self._draw = True
-        self._active = active
-        self._display = display
-        self._overlay = overlay
-        print(f'creating scene {self}')
-
-    def get_display(self):
-        return self._display
-
-    def get_image(self):
-        return self._image
-
-    def is_active(self):
-        return self._active
-
-    def use_overlay(self):
-        return self._overlay
-
-    def set_active(self, active=True):
-        self._active = active
-
-    def update(self):
-        if self._draw:
-            self._draw = False
-            return True
-        return False
-
-
-class SceneDefault(Scene):
-
-    def __init__(self, display, **kwargs):
-        super().__init__(display, active=False)
+from .scene import Scene
 
 
 class SceneIntro(Scene):
+
+    '''
+    Intro scene
+
+    This scene shows an introduction with an animation and sound.
+    While this scene is active, no overlays will be shown.
+    '''
 
     def __init__(self, display, **kwargs):
         super().__init__(display, background='#fff', overlay=False, **kwargs)
@@ -58,7 +22,7 @@ class SceneIntro(Scene):
         self._orig_image = self._image.copy()
         self._inv_image = ImageChops.invert(self._image)
         self._mask = self._image.copy().convert('L')
-        self._duration = 5  # length of startup audio
+        self._duration = 6.5  # length of startup audio
         self._anim = 3
         self._factor = 0
         self._draw_mask(self._mask, self._factor)
@@ -150,19 +114,3 @@ class SceneIntro(Scene):
             self._draw = False
             return True
         return False
-
-
-class SceneOutro(Scene):
-
-    def __init__(self, display, **kwargs):
-        super().__init__(display, overlay=False, **kwargs)
-
-
-class SceneClient(Scene):
-
-    def __init__(self, display, **kwargs):
-        super().__init__(display, **kwargs)
-        self._image_dir = os.path.join(os.path.dirname(__file__), 'images')
-        self._buttons = Image\
-            .open(os.path.join(self._image_dir, 'buttons_32.png'))\
-            .convert('RGBA')

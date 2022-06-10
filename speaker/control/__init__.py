@@ -1,0 +1,1 @@
+from .pirateaudio import ControlPirateAudio
