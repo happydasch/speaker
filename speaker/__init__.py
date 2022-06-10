@@ -19,6 +19,9 @@ class Speaker:
     MIN_BRIGHTNESS = 0
     MAX_BRIGHTNESS = 80
 
+    MIN_VOLUME = 0
+    MAX_VOLUME = 100
+
     client = None
     display = None
     control = None

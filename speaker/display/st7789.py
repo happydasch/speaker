@@ -3,6 +3,8 @@ from ST7789 import ST7789
 
 from .display import Display
 
+from PIL import Image
+
 
 class DisplayST7789(Display):
 
@@ -23,6 +25,8 @@ class DisplayST7789(Display):
             backlight=None,  # Control the backlight manually
             spi_speed_hz=self.SPI_SPEED_MHZ * 1000 * 1000
         )
+        self._st7789.display(
+            Image.new('RGB', (self._st7789.width, self._st7789.height)))
         # Set up backlight pin as a PWM output at 500Hz
         GPIO.setup(13, GPIO.OUT)
         self._backlight = GPIO.PWM(13, 500)
