@@ -1,9 +1,9 @@
 import time
 import os
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
-from .utils import image_tint
+from .utils import image_tint, draw_progress_bar
 
 
 '''
@@ -17,7 +17,7 @@ class Icon:
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         icons = os.path.join(image_dir, 'icons_256.png')
         image_map = ImageMap(icons)
-        if idx:
+        if idx is not None:
             self._image = image_map.get(idx)
         else:
             self._image = image_map.new()
@@ -72,6 +72,9 @@ class Overlay:
 
     def get_display(self):
         return self._display
+
+    def get_speaker(self):
+        return self._display.get_speaker()
 
     def get_image(self):
         return self._image
@@ -137,6 +140,7 @@ class OverlayImageMap(Overlay):
     def __init__(self, display, file, idx, foreground='#fff', **kwargs):
         super().__init__(display=display, **kwargs)
         self._overlay = ImageMap(file, foreground=foreground)
+        self._idx = idx
         self._image = self._draw_overlay(self._overlay.get(idx))
 
     def _draw_overlay(self, image):
@@ -158,7 +162,10 @@ class OverlayNotSupported(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'buttons_256.png')
-        super().__init__(display=display, file=file, idx=0, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['idx'] = 0
+        super().__init__(**kwargs)
 
 
 class OverlayButtonPlay(OverlayImageMap):
@@ -166,7 +173,10 @@ class OverlayButtonPlay(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'buttons_256.png')
-        super().__init__(display=display, file=file, idx=1, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['idx'] = 1
+        super().__init__(**kwargs)
 
 
 class OverlayButtonPause(OverlayImageMap):
@@ -174,7 +184,10 @@ class OverlayButtonPause(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'buttons_256.png')
-        super().__init__(display=display, file=file, idx=2, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['idx'] = 2
+        super().__init__(**kwargs)
 
 
 class OverlayButtonVolumeDown(OverlayImageMap):
@@ -182,7 +195,29 @@ class OverlayButtonVolumeDown(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'buttons_256.png')
-        super().__init__(display=display, file=file, idx=3, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['idx'] = 3
+        super().__init__(**kwargs)
+
+    def _draw_overlay(self, image):
+        overlay = super()._draw_overlay(image)
+        overlay_draw = ImageDraw.Draw(overlay, 'RGBA')
+        max_volume = self.get_speaker().MAX_VOLUME
+        volume = self.get_speaker().client.volume
+        ow, oh = overlay.size
+        ob = ow/40
+        rect = (ob, oh-(3*ob)-5, ow-ob, oh-(3*ob))
+        draw_progress_bar(
+            overlay_draw, volume, max_volume, rect, (255, 255, 255))
+        return overlay
+
+    def update(self):
+        res = super().update()
+        if res:
+            self._image = self._draw_overlay(
+                self._overlay.get(self._idx))
+        return res
 
 
 class OverlayButtonVolumeUp(OverlayImageMap):
@@ -190,7 +225,29 @@ class OverlayButtonVolumeUp(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'buttons_256.png')
-        super().__init__(display=display, file=file, idx=4, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['idx'] = 4
+        super().__init__(**kwargs)
+
+    def _draw_overlay(self, image):
+        overlay = super()._draw_overlay(image)
+        overlay_draw = ImageDraw.Draw(overlay, 'RGBA')
+        max_volume = self.get_speaker().MAX_VOLUME
+        volume = self.get_speaker().volume
+        ow, oh = overlay.size
+        ob = ow/40
+        rect = (ob, oh-(3*ob)-5, ow-ob, oh-(3*ob))
+        draw_progress_bar(
+            overlay_draw, volume, max_volume, rect, (255, 255, 255))
+        return overlay
+
+    def update(self):
+        res = super().update()
+        if res:
+            self._image = self._draw_overlay(
+                self._overlay.get(self._idx))
+        return res
 
 
 class OverlayButtonPrevious(OverlayImageMap):
@@ -198,7 +255,10 @@ class OverlayButtonPrevious(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'buttons_256.png')
-        super().__init__(display=display, file=file, idx=5, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['idx'] = 5
+        super().__init__(**kwargs)
 
 
 class OverlayButtonNext(OverlayImageMap):
@@ -206,7 +266,10 @@ class OverlayButtonNext(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'buttons_256.png')
-        super().__init__(display=display, file=file, idx=6, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['idx'] = 6
+        super().__init__(**kwargs)
 
 
 class OverlayIconSnapcast(OverlayImageMap):
@@ -214,8 +277,11 @@ class OverlayIconSnapcast(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'icons_256.png')
-        super().__init__(
-            display=display, file=file, foreground=None, idx=0, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['foreground'] = kwargs.get('foreground', None)
+        kwargs['idx'] = 0
+        super().__init__(**kwargs)
 
 
 class OverlayIconBluetooth(OverlayImageMap):
@@ -223,8 +289,11 @@ class OverlayIconBluetooth(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'icons_256.png')
-        super().__init__(
-            display=display, file=file, foreground=None, idx=1, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['foreground'] = kwargs.get('foreground', None)
+        kwargs['idx'] = 1
+        super().__init__(**kwargs)
 
 
 class OverlayIconAirplay(OverlayImageMap):
@@ -232,8 +301,11 @@ class OverlayIconAirplay(OverlayImageMap):
     def __init__(self, display, **kwargs):
         image_dir = os.path.join(os.path.dirname(__file__), 'images')
         file = os.path.join(image_dir, 'icons_256.png')
-        super().__init__(
-            display=display, foreground=None, file=file, idx=2, **kwargs)
+        kwargs['display'] = display
+        kwargs['file'] = file
+        kwargs['foreground'] = kwargs.get('foreground', None)
+        kwargs['idx'] = 2
+        super().__init__(**kwargs)
 
 
 '''
