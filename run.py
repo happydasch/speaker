@@ -3,7 +3,7 @@ from speaker.client import ClientAirplay, ClientBluetooth, ClientSnapcast
 
 
 def main():
-    sp = Speaker()
+    sp = Speaker(intro=True, outro=True)
     sp.add_client(ClientBluetooth)
     sp.add_client(ClientAirplay)
     sp.add_client(ClientSnapcast)
