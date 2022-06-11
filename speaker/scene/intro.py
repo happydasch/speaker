@@ -17,7 +17,8 @@ class SceneIntro(Scene):
     '''
 
     def __init__(self, display, **kwargs):
-        super().__init__(display, background='#fff', overlay=False, **kwargs)
+        kwargs |= {'background': '#fff', 'overlay': False}
+        super().__init__(display, **kwargs)
         self._draw_logo(self._image)
         self._orig_image = self._image.copy()
         self._inv_image = ImageChops.invert(self._image)
@@ -93,6 +94,7 @@ class SceneIntro(Scene):
         current_time = time.time()
         current_duration = current_time - self._timer
         factor = 0
+        redraw = False
 
         # update mask
         if current_duration > (self._duration - self._anim):
@@ -101,16 +103,14 @@ class SceneIntro(Scene):
             if factor != self._factor:
                 self._draw_mask(self._mask, factor)
                 self._factor = factor
-                self._draw = True
+                redraw = True
 
         # disable animation after n seconds
         if current_time - self._timer > self._duration:
             self._end()
 
         # redraw frame if needed
-        if self._draw:
+        if redraw:
             self._image = Image.composite(
                 self._orig_image, self._inv_image, self._mask)
-            self._draw = False
-            return True
-        return False
+        return redraw

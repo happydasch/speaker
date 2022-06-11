@@ -11,7 +11,6 @@ class Scene:
         self._image = Image.new('RGBA', display.get_size(), background)
         self._background = background
         self._timer = 0
-        self._draw = True
         self._active = active
         self._display = display
         self._overlay = overlay
@@ -20,20 +19,20 @@ class Scene:
     def get_display(self):
         return self._display
 
+    def get_speaker(self):
+        return self._display.get_speaker()
+
     def get_image(self):
         return self._image
 
     def is_active(self):
         return self._active
 
-    def use_overlay(self):
-        return self._overlay
-
     def set_active(self, active=True):
         self._active = active
 
+    def use_overlay(self):
+        return self._overlay
+
     def update(self):
-        if self._draw:
-            self._draw = False
-            return True
         return False
