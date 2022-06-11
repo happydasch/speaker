@@ -1,12 +1,65 @@
 import pathlib
 import base64
+import math
 
-from PIL import Image
+from PIL import Image, ImageFont
 from PIL.ImageColor import getcolor, getrgb
 from PIL.ImageOps import grayscale
 
 
-def image_tint(src, tint='#ffffff'):
+def text_in_rect(canvas, text, font, rect, line_spacing=1.1, fill=None):
+    width = rect[2] - rect[0]
+    height = rect[3] - rect[1]
+
+    # Given a rectangle, reflow and scale text to fit, centred
+    while font.size > 0:
+        line_height = int(font.size * line_spacing)
+        max_lines = math.floor(height / line_height)
+        lines = []
+
+        # Determine if text can fit at current scale.
+        words = text.split(" ")
+
+        while len(lines) < max_lines and len(words) > 0:
+            line = []
+            while len(words) > 0 and font.getsize(" ".join(line + [words[0]]))[0] <= width:
+                line.append(words.pop(0))
+            lines.append(" ".join(line))
+
+        if(len(lines)) <= max_lines and len(words) == 0:
+            # Solution is found, render the text.
+            y = int(rect[1] + (height / 2) - (len(lines) * line_height / 2) - (line_height - font.size) / 2)
+            bounds = [rect[2], y, rect[0], y + len(lines) * line_height]
+            for line in lines:
+                line_width = font.getsize(line)[0]
+                x = int(rect[0] + (width / 2) - (line_width / 2))
+                bounds[0] = min(bounds[0], x)
+                bounds[2] = max(bounds[2], x + line_width)
+                canvas.text((x, y), line, font=font, fill=fill)
+                y += line_height
+            return tuple(bounds)
+
+        font = ImageFont.truetype(font.path, font.size - 1)
+
+
+def draw_progress_bar(canvas, progress, max_progress, rect, colour):
+    unfilled_opacity = 0.5  # Factor to scale down colour/opacity of unfilled bar.
+
+    # Calculate bar widths.
+    rect = tuple(rect)  # Space which bar occupies.
+    full_width = rect[2] - rect[0]
+    bar_width = int((progress / max_progress) * full_width)
+    progress_rect = (rect[0], rect[1], rect[0] + bar_width, rect[3])
+
+    # Knock back unfilled part of bar.
+    unfilled_colour = tuple(int(c * unfilled_opacity) for c in colour)
+
+    # Draw bars.
+    canvas.rectangle(rect, unfilled_colour)
+    canvas.rectangle(progress_rect, colour)
+
+
+def image_tint(src, tint='#fff'):
 
     '''
     Tints a image
