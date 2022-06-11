@@ -1,4 +1,4 @@
-from ..draw import (OverlayIconSnapcast, IconSnapcast)
+from ..draw import OverlayIconSnapcast, IconSnapcast
 
 from .client import Client
 

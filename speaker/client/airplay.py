@@ -1,4 +1,4 @@
-from ..draw import (OverlayIconAirplay, IconAirplay)
+from ..draw import OverlayIconAirplay, IconAirplay
 
 from .client import Client
 
