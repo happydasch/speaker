@@ -33,8 +33,8 @@ class DisplayST7789(Display):
 
     def set_brightness(self, brightness):
         brightness = max(min(brightness, 100), 0)
-        self._backlight.ChangeDutyCycle(brightness)
         self._brightness = brightness
+        self._backlight.ChangeDutyCycle(brightness)
 
     def redraw(self):
         if self._image:

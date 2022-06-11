@@ -28,6 +28,7 @@ class Display:
 
     def set_scene(self, scene, *args, **kargs):
         self._scene = scene(self, *args, **kargs) if scene else None
+        return self._scene
 
     def get_overlay(self):
         return self._overlay
