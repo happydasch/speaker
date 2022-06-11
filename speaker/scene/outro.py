@@ -43,7 +43,6 @@ class SceneOutro(Scene):
         if current_duration <= self._duration:
             opacity = 1 - round(current_duration / self._duration, 2)
             if opacity != self._opacity:
-                print(f'new opacity: {opacity} - was: {self._opacity}')
                 self._image = Image.blend(
                     self._image_background,
                     self._image_text,
@@ -53,7 +52,6 @@ class SceneOutro(Scene):
         else:
             # disable animation after n seconds
             self.set_active(False)
-            self.get_speaker().set_active(False)
 
         # redraw frame if needed
         return redraw

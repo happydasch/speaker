@@ -139,8 +139,12 @@ class Speaker:
 
     def stop(self):
         last_update = 0
-        scene = self.display.set_scene(SceneOutro)
-        while scene and scene.is_active():
+        self._running = False
+        while True:
+            self.update()
+            scene = self.display.get_scene()
+            if not scene or not scene.is_active():
+                break
             display_update = self.display.update()
             if not display_update:
                 if time.time() - last_update < float(self._update_interval):
@@ -148,9 +152,7 @@ class Speaker:
                     continue
             if display_update:
                 self.display.redraw()
-                self.display.set_brightness(self._brightness)
             last_update = time.time()
-        self._running = False
         self.control.stop()
         self.display.stop()
         if self._thread.is_alive():
@@ -182,20 +184,24 @@ class Speaker:
                 self.set_active(False)
 
     def _check_scene(self):
-        cur_scene = self.display.get_scene()
         scene = None
 
-        if cur_scene:
-            if not cur_scene.is_active():
-                if self.client:
-                    scene = SceneClient
+        cur_scene = self.display.get_scene()
+        if self._running:
+            if cur_scene:
+                if not cur_scene.is_active():
+                    if self.client:
+                        scene = SceneClient
+                    elif self.is_active():
+                        scene = SceneDefault
+            else:
+                if self._intro:
+                    scene = SceneIntro
                 else:
                     scene = SceneDefault
         else:
-            if self._intro:
-                scene = SceneIntro
-            else:
-                scene = SceneDefault
+            if self._outro:
+                scene = SceneOutro
 
         if scene and not isinstance(cur_scene, scene):
             self.display.set_scene(scene)
