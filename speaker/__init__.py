@@ -4,7 +4,8 @@ import time
 
 from .control import ControlPirateAudio
 from .display import DisplayST7789
-from .scene import SceneClient, SceneDefault, SceneIntro
+from .scene import (
+    SceneClient, SceneDefault, SceneIntro, SceneOutro)
 
 
 __version__ = '0.0.1'
@@ -40,6 +41,8 @@ class Speaker:
         self._event = None
         self._running = False
         self._active = False
+        self._anim = False
+        self._brightness = 0
         self._active_timer = 0
         self._update_interval = update_interval
         self._display_timeout = display_timeout
@@ -70,9 +73,19 @@ class Speaker:
     def is_active(self):
         return self._active
 
-    def set_active(self, active=True):
+    def is_anim(self):
+        return self._anim
+
+    def set_active(self, active=True, brightness=None):
+        if brightness is None:
+            self._brightness = self.MAX_BRIGHTNESS
+        else:
+            self._brightness = brightness
         self._active_timer = time.time()
         self._active = active
+
+    def get_clients(self):
+        return self._clients
 
     def add_client(self, client, *args, **kwargs):
         self._clients.append(client(self, *args, **kwargs))
@@ -84,6 +97,14 @@ class Speaker:
                     duration=4.0,
                     fade_duration=1.0,
                     opacity=1.0,
+                    fade_out=True)
+        elif not client and self.client:
+            self.display.set_overlay(
+                    self.client.OVERLAY,
+                    duration=4.0,
+                    fade_duration=1.0,
+                    foreground='#bbb',
+                    opacity=0.5,
                     fade_out=True)
         self.client = client
 
@@ -104,7 +125,7 @@ class Speaker:
         self._thread.start()
         self.control.start()
         self.display.start()
-        self.set_active()
+        self.set_active(True)
         while self._running:
             self.update()
             display_update = self.display.update()
@@ -118,8 +139,8 @@ class Speaker:
 
     def stop(self):
         last_update = 0
-        self.set_active(False)
-        while self.update():
+        scene = self.display.set_scene(SceneOutro)
+        while scene and scene.is_active():
             display_update = self.display.update()
             if not display_update:
                 if time.time() - last_update < float(self._update_interval):
@@ -127,25 +148,28 @@ class Speaker:
                     continue
             if display_update:
                 self.display.redraw()
+                self.display.set_brightness(self._brightness)
             last_update = time.time()
+        self._running = False
         self.control.stop()
         self.display.stop()
-        self._running = False
         if self._thread.is_alive():
             self._thread.join(timeout=1)
 
     def _check_display_brightness(self):
         brightness = self.display.get_brightness()
-        if self.is_active() and brightness < self.MAX_BRIGHTNESS:
+        if self.is_active() and brightness < self._brightness:
             brightness += 10
-        elif not self.is_active() and brightness > self.MIN_BRIGHTNESS:
+        elif not self.is_active() and brightness > self._brightness:
             brightness -= 10
         brightness = max(
-            min(brightness, self.MAX_BRIGHTNESS),
-            self.MIN_BRIGHTNESS)
+            self.MIN_BRIGHTNESS,
+            min(brightness, self._brightness))
         if brightness != self.display.get_brightness():
             self.display.set_brightness(brightness)
+            self._anim = True
             return False
+        self._anim = False
         return True
 
     def _check_display_timeout(self):
@@ -170,6 +194,9 @@ class Speaker:
         else:
             if self._intro:
                 scene = SceneIntro
+            else:
+                scene = SceneDefault
 
         if scene and not isinstance(cur_scene, scene):
             self.display.set_scene(scene)
+            self.set_active(self.is_active())
