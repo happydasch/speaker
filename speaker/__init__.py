@@ -1,5 +1,6 @@
 from threading import Thread
 import pulsectl
+import alsaaudio
 import time
 
 from .control import ControlPirateAudio
@@ -17,16 +18,12 @@ class Speaker:
     Represents the speaker
     '''
 
-    MIN_BRIGHTNESS = 0
     MAX_BRIGHTNESS = 80
-
-    MIN_VOLUME = 0
     MAX_VOLUME = 100
 
     client = None
     display = None
     control = None
-    volume = 100
 
     def __init__(
             self, update_interval=1, display_timeout=8, fps=30,
@@ -35,6 +32,7 @@ class Speaker:
         self.client = None
         self.display = DisplayST7789(self)
         self.control = ControlPirateAudio(self)
+        self.mixer = alsaaudio.Mixer()
 
         self._thread = Thread(target=self._thread_fn, daemon=True)
         self._clients = []
@@ -164,9 +162,7 @@ class Speaker:
             brightness += 10
         elif not self.is_active() and brightness > self._brightness:
             brightness -= 10
-        brightness = max(
-            self.MIN_BRIGHTNESS,
-            min(brightness, self._brightness))
+        brightness = max(0, min(brightness, self._brightness))
         if brightness != self.display.get_brightness():
             self.display.set_brightness(brightness)
             self._anim = True
@@ -192,7 +188,7 @@ class Speaker:
                 if not cur_scene.is_active():
                     if self.client:
                         scene = SceneClient
-                    elif self.is_active():
+                    else:
                         scene = SceneDefault
             else:
                 if self._intro:
