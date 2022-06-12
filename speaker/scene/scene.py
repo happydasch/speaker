@@ -22,6 +22,9 @@ class Scene:
     def get_speaker(self):
         return self._display.get_speaker()
 
+    def get_client(self):
+        return self.get_speaker().client
+
     def get_image(self):
         return self._image
 

@@ -76,6 +76,9 @@ class Overlay:
     def get_speaker(self):
         return self._display.get_speaker()
 
+    def get_client(self):
+        return self.get_speaker().client
+
     def get_image(self):
         return self._image
 
@@ -204,7 +207,7 @@ class OverlayButtonVolumeDown(OverlayImageMap):
         overlay = super()._draw_overlay(image)
         overlay_draw = ImageDraw.Draw(overlay, 'RGBA')
         max_volume = self.get_speaker().MAX_VOLUME
-        volume = self.get_speaker().client.volume
+        volume = self.get_client().get_volume()
         ow, oh = overlay.size
         ob = ow/40
         rect = (ob, oh-(3*ob)-5, ow-ob, oh-(3*ob))
@@ -234,7 +237,7 @@ class OverlayButtonVolumeUp(OverlayImageMap):
         overlay = super()._draw_overlay(image)
         overlay_draw = ImageDraw.Draw(overlay, 'RGBA')
         max_volume = self.get_speaker().MAX_VOLUME
-        volume = self.get_speaker().volume
+        volume = self.get_client().get_volume()
         ow, oh = overlay.size
         ob = ow/40
         rect = (ob, oh-(3*ob)-5, ow-ob, oh-(3*ob))

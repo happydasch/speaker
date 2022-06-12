@@ -1,7 +1,6 @@
 import time
-import playsound
+import simpleaudio as sa
 
-from subprocess import call
 from PIL import Image, ImageDraw, ImageChops
 
 from .scene import Scene
@@ -26,19 +25,21 @@ class SceneIntro(Scene):
         self._duration = 6.5  # length of startup audio
         self._anim = 3
         self._factor = 0
+        self._volume = self.get_speaker().mixer.getvolume()[0]
         self._draw_mask(self._mask, self._factor)
+        self._wave_object = sa.WaveObject.from_wave_file('misc/startup.wav')
+        self._song = None
 
     def _begin(self):
         self._timer = time.time()
-        self._set_volume(30)
-        playsound.playsound('misc/startup.wav', False)
+        mixer = self.get_speaker().mixer
+        mixer.setvolume(30)
+        self._song = self._wave_object.play()
 
     def _end(self):
-        self._set_volume(100)
+        mixer = self.get_speaker().mixer
+        mixer.setvolume(self._volume)
         self.set_active(False)
-
-    def _set_volume(self, volume):
-        call(['amixer', 'sset', 'Master', f'{volume}%', '-q'])
 
     def _draw_logo(self, image, factor=0.8):
         image_draw = ImageDraw.Draw(image, 'RGBA')
@@ -105,8 +106,8 @@ class SceneIntro(Scene):
                 self._factor = factor
                 redraw = True
 
-        # disable animation after n seconds
-        if current_time - self._timer > self._duration:
+        if (not self._song.is_playing()
+                and (current_time - self._timer > self._duration)):
             self._end()
 
         # redraw frame if needed
