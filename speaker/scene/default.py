@@ -45,8 +45,8 @@ class SceneDefault(Scene):
         cw = int(iw/len(self.get_speaker().get_clients()))
         ch = int(ih/3)
         csw, csh = int(cw*self.ICON_FACTOR), int(ch*self.ICON_FACTOR)
-        cdw, cdh = int((cw-csw)/2), int((ch-csh)/2)
         ics = min(csw, csh)
+        cdw, cdh = int((cw-ics)/2), int((ch-ics)/2)
         # draw scene
         text_in_rect(
             canvas=image_draw,
@@ -62,7 +62,7 @@ class SceneDefault(Scene):
         image_draw.line(((ib, (ih/3)*2), (iw-ib, (ih/3)*2)), '#fff', 1)
         for i, c in enumerate(self.get_speaker().get_clients()):
             icon = c.ICON().get_image().resize((ics, ics))
-            image.alpha_composite(icon, (cw*i+cdw, ch+cw+cdh))
+            image.alpha_composite(icon, (cw*i+cdw, (ch*2)+cdh))
 
     def update(self):
         cur_time = time.time()
