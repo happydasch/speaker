@@ -33,47 +33,50 @@ class ClientBluetooth(Client):
     PRIORITY = 50
     OVERLAY = OverlayIconBluetooth
     ICON = IconBluetooth
-    UPDATE_INTERVAL = 0.5
+    UPDATE_INTERVAL = 1
 
     def __init__(self, speaker):
         super().__init__(speaker)
         self._last_update = 0
         self._path = None
+        self._player_iface = None
+        self._transport_iface = None
 
-    def _get_dbus(self):
-        player_iface = None
-        transport_iface = None
+    def _update_dbus(self, path):
+        self._player_iface = None
+        self._transport_iface = None
+        self._path = None
         try:
             bus = dbus.SystemBus()
             obj = bus.get_object(
-                'org.bluez', f'{self._path}/player0')
-            player_iface = dbus.Interface(
+                'org.bluez', f'{path}/player0')
+            self._player_iface = dbus.Interface(
                 obj, 'org.bluez.MediaPlayer1')
-            transport_iface = dbus.Interface(
+            self._transport_iface = dbus.Interface(
                 obj, "org.freedesktop.DBus.Properties")
+            self._path = path
         except Exception:
             pass
-        return player_iface, transport_iface
 
-    def _check_pulse(self):
-        with pulsectl.Pulse() as pulse:
-            bluetooth_device = None
-            for c in pulse.card_list():
-                props = c.proplist
-                if props.get('device.api') == 'bluez':
-                    bluetooth_device = c
-                    self._path = props.get('bluez.path')
+    def _check_pulse(self, pulse):
+        path = None
+        for c in pulse.card_list():
+            props = c.proplist
+            if props.get('device.api') == 'bluez':
+                path = props.get('bluez.path')
+                if path != self._path:
                     break
-            self.set_active(bluetooth_device is not None)
+        if self._path != path:
+            self._update_dbus(path)
+            self._path = path
 
-    def set_active(self, active=True):
-        self._active = active
+    def update_event(self, event, pulse):
+        self._check_pulse(pulse)
 
     def get_info(self):
         res = None
         try:
-            _, transport = self._get_dbus()
-            res = transport.GetAll("org.bluez.MediaPlayer1")
+            res = self._transport_iface.GetAll("org.bluez.MediaPlayer1")
         except Exception:
             pass
         info = BluetoothClientInfo(res)
@@ -85,7 +88,7 @@ class ClientBluetooth(Client):
         if cur_time - self._last_update < self.UPDATE_INTERVAL:
             return
 
-        self._check_pulse()
+        self._active = self._player_iface is not None
         if self.is_active():
             info = self.get_info()
             if info.status == ClientInfo.STATUS_PLAYING:
@@ -98,52 +101,43 @@ class ClientBluetooth(Client):
                     info.artist,
                     info.title,
                     info.album)
-        self._last_update = cur_time
 
-    def update_event(self, event):
-        #print(event)
-        pass
+        self._last_update = cur_time
 
     def play(self):
         try:
-            player_iface, _ = self._get_dbus()
-            player_iface.Play()
+            self._player_iface.Play()
         except Exception:
             pass
 
     def pause(self):
         try:
-            player_iface, _ = self._get_dbus()
-            player_iface.Pause()
+            self._player_iface.Pause()
         except Exception:
             pass
 
     def prev(self):
         try:
-            player_iface, _ = self._get_dbus()
-            player_iface.Prev()
+            self._player_iface.Prev()
         except Exception:
             pass
 
     def next(self):
         try:
-            player_iface, _ = self._get_dbus()
-            player_iface.Next()
+            self._player_iface.Next()
         except Exception:
             pass
 
     def volume_down(self):
         super().volume_down()
         try:
-            player_iface, _ = self._get_dbus()
-            player_iface.VolDown()
+            self._player_iface.VolDown()
         except Exception:
             pass
 
     def volume_up(self):
         super().volume_up()
         try:
-            player_iface, _ = self._get_dbus()
-            player_iface.VolUp()
+            self._player_iface.VolUp()
         except Exception:
             pass

@@ -57,9 +57,10 @@ class Speaker:
                 event = self._event
                 client = None
                 for c in sorted(self._clients, key=lambda c: c.PRIORITY):
-                    c.update_event(event)
+                    c.update_event(event, pulse)
                     if not client and c.is_active():
                         client = c
+                        break
                 if client != self.client:
                     print(f'setting client {client}')
                     self.set_client(client)
