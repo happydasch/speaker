@@ -72,6 +72,7 @@ class ClientInfo:
     artist = None
     title = None
     album = None
+    album_art = None
 
     def __str__(self) -> str:
         res = ''
