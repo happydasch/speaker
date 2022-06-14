@@ -4,7 +4,7 @@ import alsaaudio
 import time
 
 from .control import ControlPirateAudio
-from .display import DisplayST7789
+from .display import DisplayTK
 from .scene import (
     SceneClient, SceneDefault, SceneIntro, SceneOutro)
 
@@ -27,11 +27,12 @@ class Speaker:
 
     def __init__(
             self, update_interval=1, display_timeout=8, fps=30,
-            intro=True, outro=True):
+            intro=True, outro=True, display=DisplayTK,
+            control=ControlPirateAudio):
 
         self.client = None
-        self.display = DisplayST7789(self)
-        self.control = ControlPirateAudio(self)
+        self.display = display(self)
+        self.control = control(self)
         self.mixer = alsaaudio.Mixer()
 
         self._thread = Thread(target=self._thread_fn, daemon=True)
@@ -100,16 +101,17 @@ class Speaker:
         elif not client and self.client:
             self.display.set_overlay(
                     self.client.OVERLAY,
-                    duration=4.0,
+                    duration=2.0,
                     fade_duration=1.0,
-                    foreground='#bbb',
+                    foreground='#aaa',
                     opacity=0.5,
                     fade_out=True)
         self.client = client
 
     def update(self):
-        for c in self._clients:
-            c.update()
+        if self._running:
+            for c in self._clients:
+                c.update()
         self._check_display_timeout()
         self._check_scene()
         if not self._check_display_brightness():
