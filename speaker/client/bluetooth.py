@@ -1,4 +1,3 @@
-import pulsectl
 import time
 import dbus
 
@@ -57,6 +56,20 @@ class ClientBluetooth(Client):
             self._path = path
         except Exception:
             pass
+        if self._player_iface:
+            self._fn_play = self._player_iface.get_dbus_method('Play')
+            self._fn_pause = self._player_iface.get_dbus_method('Pause')
+            self._fn_prev = self._player_iface.get_dbus_method('Prev')
+            self._fn_next = self._player_iface.get_dbus_method('Next')
+            self._fn_voldown = self._player_iface.get_dbus_method('VolumeDown')
+            self._fn_volup = self._player_iface.get_dbus_method('VolumeUp')
+        else:
+            self._fn_play = None
+            self._fn_pause = None
+            self._fn_prev = None
+            self._fn_next = None
+            self._fn_voldown = None
+            self._fn_volup = None
 
     def _check_pulse(self, pulse):
         path = None
@@ -70,9 +83,6 @@ class ClientBluetooth(Client):
             self._update_dbus(path)
             self._path = path
 
-    def update_event(self, event, pulse):
-        self._check_pulse(pulse)
-
     def get_info(self):
         res = None
         try:
@@ -82,6 +92,49 @@ class ClientBluetooth(Client):
         info = BluetoothClientInfo(res)
         info.volume = self.get_volume()
         return info
+
+    def play(self):
+        try:
+            self._fn_play()
+        except Exception:
+            pass
+
+    def pause(self):
+        try:
+            self._fn_pause()
+        except Exception:
+            pass
+
+    def prev(self):
+        try:
+            self._fn_prev()
+        except Exception:
+            pass
+
+    def next(self):
+        try:
+            self._fn_next()
+        except Exception:
+            pass
+
+    def volume_down(self):
+        super().volume_down()
+        try:
+            self._fn_voldown()
+        except Exception:
+            pass
+
+    def volume_up(self):
+        super().volume_up()
+        try:
+            self._fn_volup()
+        except Exception:
+            pass
+
+    def update_event(self, event, pulse):
+        if event.facility != 'card':
+            return
+        self._check_pulse(pulse)
 
     def update(self):
         cur_time = time.time()
@@ -103,41 +156,3 @@ class ClientBluetooth(Client):
                     info.album)
 
         self._last_update = cur_time
-
-    def play(self):
-        try:
-            self._player_iface.Play()
-        except Exception:
-            pass
-
-    def pause(self):
-        try:
-            self._player_iface.Pause()
-        except Exception:
-            pass
-
-    def prev(self):
-        try:
-            self._player_iface.Prev()
-        except Exception:
-            pass
-
-    def next(self):
-        try:
-            self._player_iface.Next()
-        except Exception:
-            pass
-
-    def volume_down(self):
-        super().volume_down()
-        try:
-            self._player_iface.VolDown()
-        except Exception:
-            pass
-
-    def volume_up(self):
-        super().volume_up()
-        try:
-            self._player_iface.VolUp()
-        except Exception:
-            pass
