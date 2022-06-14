@@ -19,6 +19,6 @@ class DisplayTK(Display):
 
     def redraw(self):
         imagetk = ImageTk.PhotoImage(self._image)
-        label_image = tkinter.Label(self._root, image=imagetk)
+        label_image = tkinter.Label(self._tk, image=imagetk)
         label_image.place(x=0, y=0, width=self.WIDTH, height=self.HEIGHT)
         self._tk.update()
