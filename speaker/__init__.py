@@ -3,8 +3,6 @@ import pulsectl
 import alsaaudio
 import time
 
-from .control import ControlPirateAudio
-from .display import DisplayTK
 from .scene import (
     SceneClient, SceneDefault, SceneIntro, SceneOutro)
 
@@ -26,9 +24,8 @@ class Speaker:
     control = None
 
     def __init__(
-            self, update_interval=1, display_timeout=8, fps=30,
-            intro=True, outro=True, display=DisplayTK,
-            control=ControlPirateAudio):
+            self, display, control, cache_dir, update_interval=1,
+            display_timeout=8, fps=30, intro=True, outro=True):
 
         self.client = None
         self.display = display(self)
@@ -43,6 +40,7 @@ class Speaker:
         self._anim = False
         self._brightness = 0
         self._active_timer = 0
+        self._cache_dir = cache_dir
         self._update_interval = update_interval
         self._display_timeout = display_timeout
         self._fps = fps
@@ -63,7 +61,6 @@ class Speaker:
                         client = c
                         break
                 if client != self.client:
-                    print(f'setting client {client}')
                     self.set_client(client)
 
     def _event_handler(self, ev):
@@ -108,41 +105,35 @@ class Speaker:
                     fade_out=True)
         self.client = client
 
-    def update(self):
-        if self._running:
-            for c in self._clients:
-                c.update()
-        self._check_display_timeout()
-        self._check_scene()
-        if not self._check_display_brightness():
-            return True
-        return False
+    def run(self):
+        try:
+            self.control.start()
+            self.display.start()
+            if self._intro:
+                self._show_intro()
+            self._running = True
+            for c in self.get_clients():
+                c.start()
+            self._thread.start()
+            self._run_loop()
+        except BaseException as e:
+            print(e)
+        finally:
+            self._running = False
+            if self._outro:
+                self._show_outro()
+            for c in self.get_clients():
+                c.stop()
+            self.control.stop()
+            self.display.stop()
+            if self._thread.is_alive():
+                self._thread.join(timeout=1)
 
-    def start(self):
-        if self._running:
-            return
+    def _show_intro(self):
         last_update = 0
-        self._running = True
-        self._thread.start()
-        self.control.start()
-        self.display.start()
-        self.set_active(True)
-        while self._running:
-            self.update()
-            display_update = self.display.update()
-            if not display_update:
-                if time.time() - last_update < float(self._update_interval):
-                    time.sleep(1.0 / self._fps)
-                    continue
-            if display_update or self.is_active():
-                self.display.redraw()
-            last_update = time.time()
-
-    def stop(self):
-        last_update = 0
-        self._running = False
+        self.display.set_scene(SceneIntro)
         while True:
-            self.update()
+            self._update()
             scene = self.display.get_scene()
             if not scene or not scene.is_active():
                 break
@@ -154,10 +145,46 @@ class Speaker:
             if display_update:
                 self.display.redraw()
             last_update = time.time()
-        self.control.stop()
-        self.display.stop()
-        if self._thread.is_alive():
-            self._thread.join(timeout=1)
+
+    def _show_outro(self):
+        last_update = 0
+        self.display.set_scene(SceneOutro)
+        while True:
+            self._update()
+            scene = self.display.get_scene()
+            if not scene or not scene.is_active():
+                break
+            display_update = self.display.update()
+            if not display_update:
+                if time.time() - last_update < float(self._update_interval):
+                    time.sleep(1.0 / self._fps)
+                    continue
+            if display_update:
+                self.display.redraw()
+            last_update = time.time()
+
+    def _run_loop(self):
+        last_update = 0
+        while True:
+            self._update()
+            display_update = self.display.update()
+            if not display_update:
+                if time.time() - last_update < float(self._update_interval):
+                    time.sleep(1.0 / self._fps)
+                    continue
+            if display_update or self.is_active():
+                self.display.redraw()
+            last_update = time.time()
+
+    def _update(self):
+        if self._running:
+            for c in self.get_clients():
+                c.update()
+        self._check_display_timeout()
+        self._check_scene()
+        if not self._check_display_brightness():
+            return True
+        return False
 
     def _check_display_brightness(self):
         brightness = self.display.get_brightness()
@@ -183,25 +210,18 @@ class Speaker:
                 self.set_active(False)
 
     def _check_scene(self):
+        if not self._running:
+            return
         scene = None
-
         cur_scene = self.display.get_scene()
-        if self._running:
-            if cur_scene:
-                if not cur_scene.is_active():
-                    if self.client:
-                        scene = SceneClient
-                    else:
-                        scene = SceneDefault
-            else:
-                if self._intro:
-                    scene = SceneIntro
+        if cur_scene:
+            if not cur_scene.is_active():
+                if self.client:
+                    scene = SceneClient
                 else:
                     scene = SceneDefault
         else:
-            if self._outro:
-                scene = SceneOutro
-
+            scene = SceneDefault
         if scene and not isinstance(cur_scene, scene):
             self.display.set_scene(scene)
             self.set_active(self.is_active())

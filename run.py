@@ -1,21 +1,23 @@
+import os
+
 from speaker import Speaker
-from speaker.client import ClientAirplay, ClientBluetooth, ClientSnapcast
+from speaker.client import ClientAirplay, ClientBluetooth
 from speaker.display import DisplayST7789
 from speaker.control import ControlPirateAudio
 
 
 def main():
+    cache_dir = os.path.realpath('./cache')
+    os.makedirs(cache_dir, exist_ok=True)
     sp = Speaker(
-        intro=True, outro=True,
         display=DisplayST7789,
-        control=ControlPirateAudio)
+        control=ControlPirateAudio,
+        intro=True, outro=True,
+        cache_dir=cache_dir)
     sp.add_client(ClientBluetooth)
-    sp.add_client(ClientSnapcast)
     sp.add_client(ClientAirplay)
-    try:
-        sp.start()
-    except KeyboardInterrupt:
-        sp.stop()
+    sp.run()
+
 
 
 if __name__ == '__main__':
