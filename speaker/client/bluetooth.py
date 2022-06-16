@@ -14,10 +14,10 @@ class BluetoothClientInfo(ClientInfo):
         self.status = (
             ClientInfo.STATUS_PLAYING if res.get('Status') == 'playing'
             else ClientInfo.STATUS_STOPPED)
-        self.position = int(res.get('Position'))
+        self.position = int(res.get('Position')) / 1000
         track = res.get('Track')
         if track:
-            self.duration = int(track.get('Duration'))
+            self.duration = int(track.get('Duration')) / 1000
             self.artist = track.get('Artist')
             self.title = track.get('Title')
             self.album = track.get('Album')
@@ -40,6 +40,7 @@ class ClientBluetooth(Client):
         self._path = None
         self._player_iface = None
         self._transport_iface = None
+        self._init_volume = None
 
     def _update_dbus(self, path):
         self._player_iface = None
@@ -141,18 +142,18 @@ class ClientBluetooth(Client):
         if cur_time - self._last_update < self.UPDATE_INTERVAL:
             return
 
-        self._active = self._player_iface is not None
+        active = self._player_iface is not None
+        self._active = active
+        if active != self.is_active():
+            self._active = self._sink_input is not None
+            if self._active:
+                self._start_client()
+            else:
+                self._stop_client()
+
         if self.is_active():
             info = self.get_info()
             if info.status == ClientInfo.STATUS_PLAYING:
-                print(
-                    info.volume,
-                    round(info.position/1000/60, 2),
-                    round(info.duration/1000/60, 2),
-                    info.position,
-                    info.duration,
-                    info.artist,
-                    info.title,
-                    info.album)
+                print("BT", info)
 
         self._last_update = cur_time

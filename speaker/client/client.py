@@ -66,6 +66,7 @@ class ClientInfo:
     STATUS_PLAYING = 1
 
     volume = None
+    muted = False
     position = 0
     duration = 0
     status = STATUS_STOPPED
@@ -77,15 +78,19 @@ class ClientInfo:
     def __str__(self) -> str:
         res = ''
         for x, i in [
-            ('Volume', self.volume),
-            ('Position', self.position),
-            ('Duration', self.duration),
             ('Status', self.status),
             ('Artist', self.artist),
             ('Title', self.title),
             ('Album', self.album),
+            ('Album Art', self.album_art != ''),
+            ('Volume', self.volume),
+            ('Muted', self.muted),
+            ('Position', self.position),
+            ('Duration', self.duration),
         ]:
-            res += f'{x}: {i}\n'
+            if res != '':
+                res += ' - '
+            res += f'{x}: {i}'
         return res
 
 
@@ -140,6 +145,12 @@ class Client:
     def toggle_play(self):
         self.pause() if self.is_playing() else self.play()
 
+    def mute(self):
+        return
+
+    def unmute(self):
+        return
+
     def play(self):
         return
 
@@ -156,4 +167,10 @@ class Client:
         return
 
     def update_event(self, event, pulse):
+        return
+
+    def start(self):
+        return
+
+    def stop(self):
         return

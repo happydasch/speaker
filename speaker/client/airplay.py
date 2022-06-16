@@ -5,6 +5,7 @@ import dbus
 
 from base64 import decodebytes
 
+from ..utils import translate
 from ..draw import OverlayIconAirplay, IconAirplay
 from .client import Client, FIFO, ClientInfo
 
@@ -20,6 +21,7 @@ class ClientAirplay(Client):
         super().__init__(speaker)
         self._last_update = 0
         self._sink_input = None
+        self._init_volume = None
         self._client_info = ClientInfo()
         self.fifo = FIFO(self.PIPE, eol='</item>', skip_create=True)
         self._init_dbus()
@@ -90,8 +92,29 @@ class ClientAirplay(Client):
         elif (dtype, dcode) == ('ssnc', 'pend'):
             self._client_info.status = ClientInfo.STATUS_STOPPED
 
-        else:
-            print(f'unknown msg {dtype} {dcode} {data}')
+        elif (dtype, dcode) == ('ssnc', 'prgr'):
+            times = '' if data is None else data.decode('utf-8')
+            if times:
+                times = times.split('/')
+                times = [int(x) for x in times]
+
+                self._client_info.duration = (times[2]-times[0])/44100
+                self._client_info.position = (times[1]-times[0])/44100
+
+        elif (dtype, dcode) == ('ssnc', 'pvol'):
+            volumes = '' if data is None else data.decode('utf-8')
+            if volumes:
+                volumes = volumes.split(',')
+                volumes = [float(x) for x in volumes]
+                volume = translate(
+                    volumes[1],
+                    volumes[2], volumes[3],
+                    0, 100)
+                self._client_info.volume = int(volume)
+                if volume < 5:
+                    self._client_info.muted = True
+                else:
+                    self._client_info.muted = False
 
     def get_info(self) -> ClientInfo:
         return self._client_info
@@ -120,6 +143,9 @@ class ClientAirplay(Client):
         except Exception:
             pass
 
+    def get_volume(self):
+        return self._client_info.volume
+
     def volume_down(self):
         try:
             self._fn_voldown()
@@ -146,13 +172,26 @@ class ClientAirplay(Client):
         if self.is_active():
             info = self.get_info()
             if info.status == ClientInfo.STATUS_PLAYING:
-                print(
-                    info.volume,
-                    info.position,
-                    info.duration,
-                    info.artist,
-                    info.title,
-                    info.album)
-
-        self._active = self._sink_input is not None
+                info.position += cur_time - self._last_update
+                if info.position > info.duration:
+                    info.duration = info.position
+                print("AP", info)
+        active = self._sink_input is not None
+        if active != self.is_active():
+            self._active = active
+            if active:
+                self._start_client()
+            else:
+                self._stop_client()
         self._last_update = cur_time
+
+    def _start_client(self):
+        self.get_speaker().mixer.setvolume(100)
+
+    def _stop_client(self):
+        volume = self.get_volume()
+        if volume:
+            self.get_speaker().mixer.setvolume(volume)
+
+    def stop(self):
+        self._stop_client()
