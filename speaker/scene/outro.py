@@ -1,6 +1,6 @@
 import time
-from fonts.ttf import RobotoMedium as UserFont
 
+from fonts.ttf import RobotoMedium as UserFont
 from PIL import Image, ImageDraw, ImageFont
 
 from .scene import Scene
@@ -9,10 +9,12 @@ from ..utils import text_in_rect
 
 class SceneOutro(Scene):
 
+    DURATION = 4
+    ANIM_DURATION = 3
+
     def __init__(self, display, **kwargs):
         kwargs |= {'overlay': False, 'active': True}
         super().__init__(display, **kwargs)
-        self._duration = 3  # length of outro duration
         self._opacity = None
         self._font = ImageFont.truetype(UserFont, 96)
         self._image_background = Image.new('RGBA', display.get_size(), '#000')
@@ -39,9 +41,11 @@ class SceneOutro(Scene):
         opacity = 0
         redraw = False
 
-        # update image
-        if current_duration <= self._duration:
-            opacity = 1 - round(current_duration / self._duration, 2)
+        if current_duration < self.DURATION:
+            duration = max(
+                0,
+                current_duration - (self.DURATION - self.ANIM_DURATION))
+            opacity = 1 - round(duration / self.DURATION, 2)
             if opacity != self._opacity:
                 self._image = Image.blend(
                     self._image_background,
@@ -50,8 +54,7 @@ class SceneOutro(Scene):
                 self._opacity = opacity
                 redraw = True
         else:
-            # disable animation after n seconds
             self.set_active(False)
 
-        # redraw frame if needed
+
         return redraw

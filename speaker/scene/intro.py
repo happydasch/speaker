@@ -1,8 +1,10 @@
 import time
 import simpleaudio as sa
 
-from PIL import Image, ImageDraw, ImageChops
+from fonts.ttf import RobotoMedium as UserFont
+from PIL import Image, ImageDraw, ImageFont, ImageChops
 
+from ..utils import text_in_rect
 from .scene import Scene
 
 
@@ -15,17 +17,20 @@ class SceneIntro(Scene):
     While this scene is active, no overlays will be shown.
     '''
 
+    DURATION = 6
+    ANIM_DURATION = 3
+
     def __init__(self, display, **kwargs):
         kwargs |= {'background': '#fff', 'overlay': False}
         super().__init__(display, **kwargs)
         self._draw_logo(self._image)
+        self._font = ImageFont.truetype(UserFont, 96)
         self._orig_image = self._image.copy()
         self._inv_image = ImageChops.invert(self._image)
         self._mask = self._image.copy().convert('L')
-        self._duration = 6.5  # length of startup audio
-        self._anim = 3
         self._factor = 0
         self._volume = self.get_speaker().mixer.getvolume()[0]
+        self._draw_text(self._inv_image)
         self._draw_mask(self._mask, self._factor)
         self._wave_object = sa.WaveObject.from_wave_file('misc/startup.wav')
         self._song = None
@@ -79,6 +84,21 @@ class SceneIntro(Scene):
         image_draw.polygon(f_xy_left, fill='#000')
         image_draw.polygon(f_xy_right, fill='#000')
 
+    def _draw_text(self, image, factor=0.8):
+        image_draw = ImageDraw.Draw(image, 'RGBA')
+        iw, ih = image.size             # image width and height
+        u = (iw * factor) * 0.25        # unit (1/4 of scaled width)
+        ow, oh = u * 4, u * 2           # total width and height using units
+        pos_x = (iw - ow) / 2           # x position
+        pos_y = (ih - oh) / 2           # y position
+        xy = (pos_x + oh/4, pos_y, pos_x + ow - oh/4, pos_y + oh)
+        text_in_rect(
+            image_draw,
+            text='Hello!',
+            font=self._font,
+            rect=xy,
+            fill='#000')
+
     def _draw_mask(self, image, factor):
         image_draw = ImageDraw.Draw(image, 'L')
         iw, ih = image.size             # image width and height
@@ -97,20 +117,17 @@ class SceneIntro(Scene):
         factor = 0
         redraw = False
 
-        # update mask
-        if current_duration > (self._duration - self._anim):
-            duration = current_duration - (self._duration - self._anim)
-            factor = round(duration/self._anim, 2)
+        if current_duration < self.ANIM_DURATION:
+            factor = round(current_duration / self.ANIM_DURATION, 2)
             if factor != self._factor:
                 self._draw_mask(self._mask, factor)
                 self._factor = factor
                 redraw = True
 
         if (not self._song.is_playing()
-                and (current_time - self._timer > self._duration)):
+                and (current_time - self._timer > self.DURATION)):
             self._end()
 
-        # redraw frame if needed
         if redraw:
             self._image = Image.composite(
                 self._orig_image, self._inv_image, self._mask)
