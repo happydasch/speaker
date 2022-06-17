@@ -10,7 +10,7 @@ from ..utils import text_in_rect
 class SceneOutro(Scene):
 
     DURATION = 4
-    ANIM_DURATION = 3
+    ANIM_DURATION = 2
 
     def __init__(self, display, **kwargs):
         kwargs |= {'overlay': False, 'active': True}
@@ -44,7 +44,7 @@ class SceneOutro(Scene):
         if current_duration < self.DURATION:
             duration = max(
                 0,
-                current_duration - (self.DURATION - self.ANIM_DURATION))
+                current_duration - self.ANIM_DURATION)
             opacity = 1 - round(duration / self.DURATION, 2)
             if opacity != self._opacity:
                 self._image = Image.blend(
@@ -55,6 +55,5 @@ class SceneOutro(Scene):
                 redraw = True
         else:
             self.set_active(False)
-
 
         return redraw

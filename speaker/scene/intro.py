@@ -18,7 +18,7 @@ class SceneIntro(Scene):
     '''
 
     DURATION = 6
-    ANIM_DURATION = 3
+    ANIM_DURATION = 4
 
     def __init__(self, display, **kwargs):
         kwargs |= {'background': '#fff', 'overlay': False}
