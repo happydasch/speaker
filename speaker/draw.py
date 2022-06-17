@@ -209,8 +209,8 @@ class OverlayButtonVolumeDown(OverlayImageMap):
         max_volume = self.get_speaker().MAX_VOLUME
         volume = self.get_client().get_volume()
         ow, oh = overlay.size
-        ob = ow/40
-        rect = (ob, oh-(3*ob)-5, ow-ob, oh-(3*ob))
+        ob = ow * 0.02
+        rect = (ob, 2 * ob, ow - ob, 3 * ob)
         draw_progress_bar(
             overlay_draw, volume, max_volume, rect, (255, 255, 255))
         return overlay
@@ -239,8 +239,8 @@ class OverlayButtonVolumeUp(OverlayImageMap):
         max_volume = self.get_speaker().MAX_VOLUME
         volume = self.get_client().get_volume()
         ow, oh = overlay.size
-        ob = ow/40
-        rect = (ob, oh-(3*ob)-5, ow-ob, oh-(3*ob))
+        ob = ow * 0.02
+        rect = (ob, 2 * ob, ow - ob, 3 * ob)
         draw_progress_bar(
             overlay_draw, volume, max_volume, rect, (255, 255, 255))
         return overlay

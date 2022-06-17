@@ -14,8 +14,8 @@ def main():
         control=ControlPirateAudio,
         intro=True, outro=True,
         cache_dir=cache_dir)
-    sp.add_client(ClientBluetooth)
     sp.add_client(ClientAirplay)
+    sp.add_client(ClientBluetooth)
     sp.run()
 
 

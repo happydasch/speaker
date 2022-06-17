@@ -81,6 +81,9 @@ class Speaker:
         self._active_timer = time.time()
         self._active = active
 
+    def get_cache_dir(self):
+        return self._cache_dir
+
     def get_clients(self):
         return self._clients
 
@@ -117,10 +120,8 @@ class Speaker:
             self._thread.start()
             self._run_loop()
         except BaseException as e:
-            print(e)
-        finally:
-            self._running = False
-            if self._outro:
+            if self._outro and self._running:
+                self._running = False
                 self._show_outro()
             for c in self.get_clients():
                 c.stop()
@@ -128,6 +129,8 @@ class Speaker:
             self.display.stop()
             if self._thread.is_alive():
                 self._thread.join(timeout=1)
+            if not isinstance(e, KeyboardInterrupt):
+                raise e
 
     def _show_intro(self):
         last_update = 0

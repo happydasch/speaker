@@ -1,5 +1,4 @@
-import pathlib
-import base64
+import os
 import math
 
 from PIL import Image, ImageFont
@@ -26,7 +25,7 @@ def text_in_rect(canvas, text, font, rect, line_spacing=1.1, fill=None):
                 line.append(words.pop(0))
             lines.append(" ".join(line))
 
-        if(len(lines)) <= max_lines and len(words) == 0:
+        if (len(lines)) <= max_lines and len(words) == 0:
             # Solution is found, render the text.
             y = int(rect[1] + (height / 2) - (len(lines) * line_height / 2) - (line_height - font.size) / 2)
             bounds = [rect[2], y, rect[0], y + len(lines) * line_height]
@@ -101,10 +100,7 @@ def bytes_to_file(input_data, output_file):
     '''
     Saves bytes to a file.
     '''
-
-    pathlib.Path(output_file.parent).mkdir(parents=True, exist_ok=True)
-
-    with open(output_file, "wb") as file:
+    with open(output_file, 'wb') as file:
         file.write(input_data)
 
 
