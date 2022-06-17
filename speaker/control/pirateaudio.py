@@ -12,15 +12,15 @@ from .control import Control
 class ControlPirateAudio(Control):
 
     def __init__(
-            self, speaker, pin_play=5, pin_next=16,
-            pin_volume_down=6, pin_volume_up=24):
+            self, speaker, pin_play=6, pin_next=24,
+            pin_volume_down=5, pin_volume_up=16):
         super().__init__(speaker)
         self._pins = [pin_play, pin_next, pin_volume_down, pin_volume_up]
         self._last_press = 0
-        self._pin_play = pin_play                   # button A
-        self._pin_next = pin_next                   # button X
-        self._pin_volume_down = pin_volume_down     # button B
-        self._pin_volume_up = pin_volume_up         # button Y
+        self._pin_play = pin_play
+        self._pin_next = pin_next
+        self._pin_volume_down = pin_volume_down
+        self._pin_volume_up = pin_volume_up
 
     def start(self):
         GPIO.setup(self._pins, GPIO.IN, pull_up_down=GPIO.PUD_UP)
