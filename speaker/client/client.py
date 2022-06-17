@@ -67,12 +67,12 @@ class ClientInfo:
 
     volume = None
     muted = False
-    position = 0
-    duration = 0
+    position = -1
+    duration = -1
     status = STATUS_STOPPED
-    artist = None
-    title = None
-    album = None
+    artist = ''
+    title = ''
+    album = ''
     album_art = None
 
     def __str__(self) -> str:
@@ -82,7 +82,7 @@ class ClientInfo:
             ('Artist', self.artist),
             ('Title', self.title),
             ('Album', self.album),
-            ('Album Art', self.album_art != ''),
+            ('Album Art', self.album_art is not None),
             ('Volume', self.volume),
             ('Muted', self.muted),
             ('Position', self.position),

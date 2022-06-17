@@ -1,3 +1,4 @@
+import os
 import time
 import untangle
 import xml
@@ -5,7 +6,7 @@ import dbus
 
 from base64 import decodebytes
 
-from ..utils import translate
+from ..utils import bytes_to_file, translate
 from ..draw import OverlayIconAirplay, IconAirplay
 from .client import Client, FIFO, ClientInfo
 
@@ -43,6 +44,7 @@ class ClientAirplay(Client):
         interface = dbus.Interface(
             proxy, dbus_interface="org.gnome.ShairportSync.RemoteControl"
         )
+        self._fn_playpause = interface.get_dbus_method("PlayPause")
         self._fn_play = interface.get_dbus_method("Play")
         self._fn_pause = interface.get_dbus_method("Pause")
         self._fn_prev = interface.get_dbus_method("Prev")
@@ -75,16 +77,23 @@ class ClientAirplay(Client):
                 data = decodebytes(data.encode('ascii'))
 
         if (dtype, dcode) == ('ssnc', 'PICT'):
+            dir = self.get_speaker().get_cache_dir()
+            file = os.path.join(dir, 'airplay_current.jpg')
+            if data is not None:
+                bytes_to_file(data, file)
             self._client_info.album_art = data
 
         elif (dtype, dcode) == ('core', 'asal'):  # Album
-            self._client_info.album = '' if data is None else data.decode('utf-8')
+            self._client_info.album = (
+                '' if data is None else data.decode('utf-8'))
 
         elif (dtype, dcode) == ('core', 'asar'):  # Artist
-            self._client_info.artist = '' if data is None else data.decode('utf-8')
+            self._client_info.artist = (
+                '' if data is None else data.decode('utf-8'))
 
         elif (dtype, dcode) == ('core', 'minm'):  # Song Name / Item
-            self._client_info.title = '' if data is None else data.decode('utf-8')
+            self._client_info.title = (
+                '' if data is None else data.decode('utf-8'))
 
         elif (dtype, dcode) == ('ssnc', 'prsm'):
             self._client_info.status = ClientInfo.STATUS_PLAYING
@@ -93,7 +102,7 @@ class ClientAirplay(Client):
             self._client_info.status = ClientInfo.STATUS_STOPPED
 
         elif (dtype, dcode) == ('ssnc', 'prgr'):
-            times = '' if data is None else data.decode('utf-8')
+            times = ('' if data is None else data.decode('utf-8'))
             if times:
                 times = times.split('/')
                 times = [int(x) for x in times]
@@ -121,13 +130,17 @@ class ClientAirplay(Client):
 
     def play(self):
         try:
-            self._fn_play()
+            if not self.is_playing():
+                self._fn_play()
+                self._client_info.status = ClientInfo.STATUS_PLAYING
         except Exception:
             pass
 
     def pause(self):
         try:
-            self._fn_pause()
+            if self.is_playing():
+                self._fn_pause()
+                self._client_info.status = ClientInfo.STATUS_STOPPED
         except Exception:
             pass
 
@@ -174,8 +187,7 @@ class ClientAirplay(Client):
             if info.status == ClientInfo.STATUS_PLAYING:
                 info.position += cur_time - self._last_update
                 if info.position > info.duration:
-                    info.duration = info.position
-                print("AP", info)
+                    info.position = info.duration
         active = self._sink_input is not None
         if active != self.is_active():
             self._active = active
@@ -186,12 +198,15 @@ class ClientAirplay(Client):
         self._last_update = cur_time
 
     def _start_client(self):
+        self._client_info.album_art = None
+        self._client_info.album = ''
+        self._client_info.title = ''
+        self._client_info.artist = ''
+        self._client_info.position = -1
+        self._client_info.duration = -1
         self.get_speaker().mixer.setvolume(100)
 
     def _stop_client(self):
         volume = self.get_volume()
         if volume:
             self.get_speaker().mixer.setvolume(volume)
-
-    def stop(self):
-        self._stop_client()

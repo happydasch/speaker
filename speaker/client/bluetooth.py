@@ -18,9 +18,9 @@ class BluetoothClientInfo(ClientInfo):
         track = res.get('Track')
         if track:
             self.duration = int(track.get('Duration')) / 1000
-            self.artist = track.get('Artist')
-            self.title = track.get('Title')
-            self.album = track.get('Album')
+            self.artist = track.get('Artist', '')
+            self.title = track.get('Title', '')
+            self.album = track.get('Album', '')
 
 
 class ClientBluetooth(Client):
